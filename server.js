@@ -11,36 +11,40 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Gmail SMTP configuration
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASS, // App-specific password
-  },
-});
+const createTransporter = () =>
+  nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASS,
+    },
+  });
 
-app.post('/send-email', (req, res) => {
+app.post('/api/send-email', async (req, res) => {
   const { to, cc, bcc, subject, message } = req.body;
+
+  if (!to || !subject || !message) {
+    return res.status(400).json({ error: 'To, subject, and message are required.' });
+  }
 
   const mailOptions = {
     from: process.env.GMAIL_USER,
-    to: to,
+    to,
     cc: cc || '',
     bcc: bcc || '',
     subject: subject,
     text: message,
-    // You can also use html: '<h1>...</h1>' if needed
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email:', error);
-      return res.status(500).json({ error: error.message });
-    }
+  try {
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
     console.log('Email sent:', info.response);
     res.status(200).json({ message: 'Email sent successfully!' });
-  });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.listen(PORT, () => {

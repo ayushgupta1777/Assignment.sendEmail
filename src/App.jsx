@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const API_URL = '/api/send-email';
+
 function App() {
   const [formData, setFormData] = useState({
     to: '',
@@ -23,7 +25,7 @@ function App() {
     setStatus({ type: '', message: '' });
 
     try {
-      const response = await axios.post('http://localhost:5000/send-email', formData);
+      const response = await axios.post(API_URL, formData);
       setStatus({ type: 'success', message: response.data.message });
       setFormData({ to: '', cc: '', bcc: '', subject: '', message: '' });
     } catch (err) {
